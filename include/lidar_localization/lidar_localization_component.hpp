@@ -127,6 +127,8 @@ public:
   int ndt_num_threads_;
   int ndt_max_iterations_;
 
+  bool node_active_{false};
+
   // imu
   LidarUndistortion lidar_undistortion_;
 };

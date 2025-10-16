@@ -61,6 +61,8 @@ CallbackReturn PCLLocalization::on_activate(const rclcpp_lifecycle::State &)
   path_pub_->on_activate();
   initial_map_pub_->on_activate();
 
+  node_active_ = true;
+
   if (set_initial_pose_) {
     auto msg = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
 
@@ -135,6 +137,8 @@ CallbackReturn PCLLocalization::on_deactivate(const rclcpp_lifecycle::State &)
   pose_pub_->on_deactivate();
   path_pub_->on_deactivate();
   initial_map_pub_->on_deactivate();
+
+  node_active_ = false;
 
   RCLCPP_INFO(get_logger(), "Deactivating end");
   return CallbackReturn::SUCCESS;
@@ -537,7 +541,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
   map_to_base_link_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
   map_to_base_link_stamped.transform.rotation = quat_msg;
   if (!enable_map_odom_tf_) {
-    broadcaster_.sendTransform(map_to_base_link_stamped);
+    if (node_active_){
+      broadcaster_.sendTransform(map_to_base_link_stamped);
+    }
   } else {
     tf2::Transform map_to_base_link_tf;
     tf2::fromMsg(map_to_base_link_stamped.transform, map_to_base_link_tf);
