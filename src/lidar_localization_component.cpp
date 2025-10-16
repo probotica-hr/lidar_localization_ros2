@@ -545,29 +545,30 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
       broadcaster_.sendTransform(map_to_base_link_stamped);
     }
   } else {
-    tf2::Transform map_to_base_link_tf;
-    tf2::fromMsg(map_to_base_link_stamped.transform, map_to_base_link_tf);
-
-    geometry_msgs::msg::TransformStamped odom_to_base_link_msg;
-    try {
-      odom_to_base_link_msg = tfbuffer_.lookupTransform(
-        odom_frame_id_, base_frame_id_, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(
-        this->get_logger(), "Could not get transform %s to %s: %s",
-        base_frame_id_.c_str(), odom_frame_id_.c_str(), ex.what());
-      return;
-    }
-    tf2::Transform odom_to_base_link_tf;
-    tf2::fromMsg(odom_to_base_link_msg.transform, odom_to_base_link_tf);
-
-    tf2::Transform map_to_odom_tf = map_to_base_link_tf * odom_to_base_link_tf.inverse();
-    geometry_msgs::msg::TransformStamped map_to_odom_stamped;
-    map_to_odom_stamped.header.stamp = msg->header.stamp;
-    map_to_odom_stamped.header.frame_id = global_frame_id_;
-    map_to_odom_stamped.child_frame_id = odom_frame_id_;
-    map_to_odom_stamped.transform = tf2::toMsg(map_to_odom_tf);
     if (node_active_){
+      tf2::Transform map_to_base_link_tf;
+      tf2::fromMsg(map_to_base_link_stamped.transform, map_to_base_link_tf);
+
+      geometry_msgs::msg::TransformStamped odom_to_base_link_msg;
+      try {
+        odom_to_base_link_msg = tfbuffer_.lookupTransform(
+          odom_frame_id_, base_frame_id_, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+      } catch (tf2::TransformException & ex) {
+        RCLCPP_WARN(
+          this->get_logger(), "Could not get transform %s to %s: %s",
+          base_frame_id_.c_str(), odom_frame_id_.c_str(), ex.what());
+        return;
+      }
+      tf2::Transform odom_to_base_link_tf;
+      tf2::fromMsg(odom_to_base_link_msg.transform, odom_to_base_link_tf);
+
+      tf2::Transform map_to_odom_tf = map_to_base_link_tf * odom_to_base_link_tf.inverse();
+      geometry_msgs::msg::TransformStamped map_to_odom_stamped;
+      map_to_odom_stamped.header.stamp = msg->header.stamp;
+      map_to_odom_stamped.header.frame_id = global_frame_id_;
+      map_to_odom_stamped.child_frame_id = odom_frame_id_;
+      map_to_odom_stamped.transform = tf2::toMsg(map_to_odom_tf);
+      
       broadcaster_.sendTransform(map_to_odom_stamped);
     }   
   }
