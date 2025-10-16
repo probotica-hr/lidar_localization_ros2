@@ -567,7 +567,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
     map_to_odom_stamped.header.frame_id = global_frame_id_;
     map_to_odom_stamped.child_frame_id = odom_frame_id_;
     map_to_odom_stamped.transform = tf2::toMsg(map_to_odom_tf);
-    broadcaster_.sendTransform(map_to_odom_stamped);
+    if (node_active_){
+      broadcaster_.sendTransform(map_to_odom_stamped);
+    }   
   }
 
   geometry_msgs::msg::PoseStamped::SharedPtr pose_stamped_ptr(new geometry_msgs::msg::PoseStamped);
