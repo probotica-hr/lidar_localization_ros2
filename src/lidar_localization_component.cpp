@@ -320,11 +320,11 @@ void PCLLocalization::initialPoseReceived(const geometry_msgs::msg::PoseWithCova
     RCLCPP_WARN(this->get_logger(), "initialpose_frame_id does not match global_frame_id");
     return;
   }
+
   initialpose_recieved_ = true;
   corrent_pose_with_cov_stamped_ptr_ = msg;
   pose_pub_->publish(*corrent_pose_with_cov_stamped_ptr_);
 
-  cloudReceived(last_scan_ptr_);
   RCLCPP_INFO(get_logger(), "initialPoseReceived end");
 }
 
@@ -356,7 +356,7 @@ void PCLLocalization::mapReceived(const sensor_msgs::msg::PointCloud2::SharedPtr
 
 void PCLLocalization::odomReceived(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  if (!use_odom_) {return;}
+  if (!use_odom_ || !initialpose_recieved_) {return;}
   RCLCPP_INFO(get_logger(), "odomReceived");
 
   double current_odom_received_time = msg->header.stamp.sec +
