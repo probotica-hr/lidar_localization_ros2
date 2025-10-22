@@ -129,6 +129,7 @@ public:
 
   bool node_active_{false};
   bool enable_timer_publishing_{false};
+  bool broadcast_tf_{false};
 
   // imu
   LidarUndistortion lidar_undistortion_;

@@ -36,8 +36,9 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions & options)
   declare_parameter("use_odom", false);
   declare_parameter("use_imu", false);
   declare_parameter("enable_debug", false);
-  declare_parameter("enable_timer_publishing_", false);
+  declare_parameter("enable_timer_publishing", false);
   declare_parameter("pose_publish_frequency", 10.0);
+  declare_parameter("broadcast_tf", false);
 }
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -212,8 +213,9 @@ void PCLLocalization::initializeParameters()
   get_parameter("use_odom", use_odom_);
   get_parameter("use_imu", use_imu_);
   get_parameter("enable_debug", enable_debug_);
-  get_parameter("enable_timer_publishing_", enable_timer_publishing_);
+  get_parameter("enable_timer_publishing", enable_timer_publishing_);
   get_parameter("pose_publish_frequency", pose_publish_frequency_);
+  get_parameter("broadcast_tf", broadcast_tf_);
 
   RCLCPP_INFO(get_logger(),"global_frame_id: %s", global_frame_id_.c_str());
   RCLCPP_INFO(get_logger(),"odom_frame_id: %s", odom_frame_id_.c_str());
@@ -236,6 +238,7 @@ void PCLLocalization::initializeParameters()
   RCLCPP_INFO(get_logger(),"enable_debug: %d", enable_debug_);
   RCLCPP_INFO(get_logger(),"enable_timer_publishing: %d", enable_timer_publishing_);
   RCLCPP_INFO(get_logger(),"pose_publish_frequency: %lf", pose_publish_frequency_);
+  RCLCPP_INFO(get_logger(),"broadcast_tf: %d", broadcast_tf_);
 }
 
 void PCLLocalization::initializePubSub()
@@ -563,7 +566,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
     map_to_base_link_stamped.transform.translation.z = static_cast<double>(final_transformation(2, 3));
     map_to_base_link_stamped.transform.rotation = quat_msg;
     if (!enable_map_odom_tf_) {
-      broadcaster_.sendTransform(map_to_base_link_stamped);
+      if (broadcast_tf_) {
+        broadcaster_.sendTransform(map_to_base_link_stamped);
+      }
     } else {
       tf2::Transform map_to_base_link_tf;
       tf2::fromMsg(map_to_base_link_stamped.transform, map_to_base_link_tf);
@@ -587,7 +592,9 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
       map_to_odom_stamped.header.frame_id = global_frame_id_;
       map_to_odom_stamped.child_frame_id = odom_frame_id_;
       map_to_odom_stamped.transform = tf2::toMsg(map_to_odom_tf);
-      broadcaster_.sendTransform(map_to_odom_stamped);
+      if (broadcast_tf_) {
+        broadcaster_.sendTransform(map_to_odom_stamped);
+      }
     }
 
     geometry_msgs::msg::PoseStamped::SharedPtr pose_stamped_ptr(new geometry_msgs::msg::PoseStamped);
@@ -654,7 +661,9 @@ void PCLLocalization::timerPublishPose()
   map_to_base_link_stamped.transform.rotation = pose_copy.pose.pose.orientation;
 
   if (!enable_map_odom_tf_) {
-    broadcaster_.sendTransform(map_to_base_link_stamped);
+    if (broadcast_tf_) {
+      broadcaster_.sendTransform(map_to_base_link_stamped);
+    }
   } else {
     tf2::Transform map_to_base_link_tf;
     tf2::fromMsg(map_to_base_link_stamped.transform, map_to_base_link_tf);
@@ -679,6 +688,8 @@ void PCLLocalization::timerPublishPose()
     map_to_odom_stamped.child_frame_id = odom_frame_id_;
     map_to_odom_stamped.transform = tf2::toMsg(map_to_odom_tf);
     
-    broadcaster_.sendTransform(map_to_odom_stamped);
+    if (broadcast_tf_) {
+      broadcaster_.sendTransform(map_to_odom_stamped);
+    }
   }
 }
